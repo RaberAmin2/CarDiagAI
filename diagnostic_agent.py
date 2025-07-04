@@ -77,7 +77,7 @@ graph=workflow.compile()
 st.markdown("# AI Car Diagnostic Agent")
 
 if 'state' not in st.session_state:
-    st.session_state.state={
+    st.session_state.state = {
         "description_text": "",
         "affected_parts": [],
         "affected_beaviors": [],
@@ -93,26 +93,13 @@ if 'state' not in st.session_state:
 with st.form("diagnostic_form"):
     col1,col2= st.columns(2)
     with col1:
-        st.text_area("Beschreibung des Problems", key="description_text", placeholder="Beschreiben Sie das Problem Ihres Fahrzeugs... Bitte geben Sie auch das fahrzeug inklusive Baujahr an.", height=200)
-        st.text_input("Betroffene Teile", key="affected_parts", placeholder="Z.B. Motor, Getriebe, etc.")
-        st.text_input("Betroffene Verhaltensweisen", key="affected_beaviors", placeholder="Z.B. Leistungsverlust, Geräusche, etc.")
-        st.text_input("Mögliche Ursachen", key="possible_causes", placeholder="Z.B. Verschleiß, Defekt, etc.")
-        st.text_input("Mögliche Lösungen", key="possible_solutions", placeholder="Z.B. Reparatur, Austausch, etc.")
-        st.text_input("Geräusche", key="noises", placeholder="Z.B. Klopfen, Quietschen, etc.")
-        st.text_input("Geänderte Teile des Fahrzeugs", key="changed_parts", placeholder="Z.B. Reifen, Bremsen, etc.")
-    
+        st.text_area("Beschreibung des Problems", placeholder="Beschreiben Sie das Problem Ihres Fahrzeugs... Bitte geben Sie auch das fahrzeug inklusive Baujahr an.", height=200)
+
     submit_button = st.form_submit_button(label='Diagnose starten')
     #Verarbeite die Eingaben
 if submit_button:    
-    problem_summary_text= f"Beschreibung des Problems: {description_text}\nBetroffene Teile: {affected_parts}\nBetroffene Verhaltensweisen: {affected_beaviors}\nMögliche Ursachen: {possible_causes}\nMögliche Lösungen: {possible_solutions}\nGeräusche: {noises}\nGeänderte Teile des Fahrzeugs: {changed_parts}"
-    problem_summary={"Beschreibung des Problems":description_text,
-    "Betroffene Teile": affected_parts,
-    "Betroffene Verhaltensweisen": affected_beaviors,
-    "Mögliche Ursachen": possible_causes,
-    "Mögliche Lösungen": possible_solutions,
-    "Geräusche": noises,
-    "Geänderte Teile des Fahrzeugs": changed_parts
-    }
+    problem_summary_text = st.session_state.state["description_text"]
+    #problem_summary={"description_text":description_text}
      
     st.session_state.state.update({
         "problem_summary_text": "",
@@ -128,7 +115,7 @@ if submit_button:
         "noises": "",
         "changed_parts": "",
     })
-
+#here########################
 #layout
 if st.session_state.state.get("problem_summary_text"):
     col_description, col_chat = st.columns(0,1)
