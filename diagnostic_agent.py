@@ -15,7 +15,7 @@ from langchain_community.chat_models import ChatOllama
 from langchain_community.utilities import GoogleSerperAPIWrapper
 from dotenv import load_dotenv
 import os
-from agents import XXXXX
+from agents import identify_car,new_parts,noise,behavior,possible_solution,chat_agent,possible_cause
 from utils_export import export_to_pdf
 
 #lädt umgebungs variabeln
@@ -39,8 +39,9 @@ Geräusche die auftreten.
 Geänderte Teile des Fahrzeugs.
 """
 #Definiere status
-class GraphState(TypeDict):
+class GraphState(TypedDict):
     description_text: str
+    car_details: list[str]
     affected_parts: list[str]
     affected_beaviors: list[str]
     possible_causes: list[str]
@@ -52,35 +53,30 @@ class GraphState(TypeDict):
     chat_history: Annotated[list[dict],"Chat history for the conversation"]
 
 #Langgraph workflow
-workflow_state = StateGraph(GraphState)
-workflow.add_node("description_text",description_text.description_text)
-workflow.add_node("affected_parts",affected_parts.affected_parts)
-workflow.add_node("affected_behavior",affected_beaviors.affected_beaviors)
-workflow.add_node("possible_causes",possible_causes.possible_causes)
-workflow.add_node("possible_solutions",possible_solutions.possible_solutions)
-workflow.add_node("noises",noises.noises)
-workflow.add_node("changed_parts",changed_parts.changed_parts)
-workflow.add_node("chat_response",chat_response.chat_response)
-workflow.add_node("user_question",user_question.user_question)
-workflow.add_node("chat_history",chat_history.chat_history)
+workflow = StateGraph(GraphState)
+workflow.add_node("identify_car",identify_car.identify_car)
+workflow.add_node("new_parts",new_parts.new_parts)
+workflow.add_node("noise",noise.noise)
+workflow.add_node("behavior",behavior.behavior)
+workflow.add_node("possible_solution",possible_solution.possible_solution)
+workflow.add_node("possible_cause",possible_cause.possible_cause)
+workflow.add_node("chat",chat_agent.chat_node)
     
 ##Init Defined Workflow !!!!!!!!!!!!!!!!!!!!
-workflow.add_edge(description_text, affected_parts)
-workflow.add_edge(affected_parts, affected_beaviors)
-workflow.add_edge(affected_beaviors, possible_causes)
-workflow.add_edge(possible_causes, possible_solutions)
-workflow.add_edge(possible_solutions, noises)
-workflow.add_edge(noises, changed_parts)
-workflow.add_edge(changed_parts, chat_response)
-workflow.add_edge(chat_response, user_question)
-workflow.add_edge(user_question, chat_history)
-workflow.add_edge(chat_history, END)
+workflow.set_entry_point("identify_car")
+workflow.add_edge("identify_car", "behavior")
+workflow.add_edge("behavior", "noise")
+workflow.add_edge("noise", "new_parts")
+workflow.add_edge("new_parts", "possible_cause")
+workflow.add_edge("possible_cause", "possible_solution")
+workflow.add_edge("possible_solution", "chat")
+workflow.add_edge("chat", END)
 graph=workflow.compile()
 
 #ui
 st.markdown("# AI Car Diagnostic Agent")
 
-if 'graph_state' not in st.session_state:
+if 'state' not in st.session_state:
     st.session_state.state={
         "description_text": "",
         "affected_parts": [],
@@ -95,7 +91,7 @@ if 'graph_state' not in st.session_state:
     }
 
 with st.form("diagnostic_form"):
-    col1=st.columns(1)
+    col1,col2= st.columns(2)
     with col1:
         st.text_area("Beschreibung des Problems", key="description_text", placeholder="Beschreiben Sie das Problem Ihres Fahrzeugs... Bitte geben Sie auch das fahrzeug inklusive Baujahr an.", height=200)
         st.text_input("Betroffene Teile", key="affected_parts", placeholder="Z.B. Motor, Getriebe, etc.")
@@ -177,8 +173,8 @@ if st.session_state.state.get("problem_summary_text"):
             with st.chat_message("assistant"):
                 st.markdown(chat["response"])
         
-        if user_input:
-            st.session_state.state["Frage etwas"] = user_input
+        if user_input:= st.session_state.state["Frage etwas"] :
+            st.session_state.state["user_question"]= user_input
             with st.spinner("Antwort wird generiert..."):
                 result = chat_agent.chat_node(st.session_state.state)
                 st.session_state.state.update(result)
