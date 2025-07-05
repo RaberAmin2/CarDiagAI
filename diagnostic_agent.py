@@ -41,13 +41,13 @@ Geänderte Teile des Fahrzeugs.
 #Definiere status
 class GraphState(TypedDict):
     description_text: str
-    car_details: list[str]
-    affected_parts: list[str]
-    affected_beaviors: list[str]
-    possible_causes: list[str]
-    possible_solutions: list[str]
-    noises: list[str]
-    changed_parts: list[str]
+    car_details: str
+    affected_parts: str
+    affected_beaviors: str
+    possible_causes: str
+    possible_solutions: str
+    noises: str
+    changed_parts: str
     chat_response: str
     user_question: str
     chat_history: Annotated[list[dict],"Chat history for the conversation"]
@@ -92,24 +92,21 @@ if 'state' not in st.session_state:
     }
 
 with st.form("diagnostic_form"):
-    submit_btn = st.form_submit_button("Diagnose starten")
 
     col1= st.columns(1)
-    with col1:
-        st.text_area("Beschreibung des Problems")
+    if col1:
+        a=st.text_area("Beschreibung des Problems")
     #Verarbeite die Eingaben
+    submit_btn = st.form_submit_button("Diagnose starten")
+
 if submit_btn:    
-    problem_summary_text = st.session_state.state["description_text"]
     #problem_summary={"description_text":description_text}
-     
     st.session_state.state.update({
-        "problem_summary_text": "",
-        "problem_summary": "",
         "chat_history": "",
         "user_question": "",
         "chat_response": "",
         "car_details":"",
-        "description_text":"" ,
+        "description_text":a,
         "affected_parts": "",
         "affected_beaviors": "",
         "possible_causes": "",
@@ -134,7 +131,7 @@ if st.session_state.state.get("possible_solutions") :
         st.markdown(st.session_state.state["possible_solutions"])
 
         # All agent buttons in one row
-        col_btn1, col_btn2, col_btn3, col_btn4, col_btn5,col_btn6 = st.columns(5)
+        col_btn1, col_btn2, col_btn3, col_btn4, col_btn5,col_btn6 = st.columns(6)
         with col_btn1:
             if st.button("Get Activity Car-info"):
                 with st.spinner("Fetching Car Details..."):
@@ -185,7 +182,7 @@ if st.session_state.state.get("possible_solutions") :
 
         # Export PDF button
         if st.button("Export as PDF"):
-            pdf_path = export_to_pdf(st.session_state.state["itinerary"])
+            pdf_path = export_to_pdf(st.session_state.state["description_text"]+st.session_state.state["affected_beaviors"],)
             if pdf_path:
                 with open(pdf_path, "rb") as f:
                     st.download_button("Download Itinerary PDF", f, file_name="itinerary.pdf")

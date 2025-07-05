@@ -7,10 +7,9 @@ def chat_node(state):
     prompt = f"""
     Context:
     description: {json.dumps(state['description_text'], indent=2)}
-    Itinerary: {state['itinerary']}
 
     User Question:
-    {state['user_questions']}
+    {state['user_question']}
 
     Respond conversationally with insights or suggestions : keep your response brief
     {{ "chat_response": "Your response here" }}
@@ -22,7 +21,7 @@ def chat_node(state):
             response = parsed.get("chat_response", result.strip())
         except json.JSONDecodeError:
             response = result.strip()
-        chat_entry = {"question": state['user_questions'], "response": response}
+        chat_entry = {"question": state['user_question'], "response": response}
         chat_history = state.get('chat_history', []) + [chat_entry]
         return {"chat_response": response, "chat_history": chat_history}
     except Exception as e:
