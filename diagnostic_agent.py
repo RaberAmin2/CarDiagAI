@@ -84,6 +84,7 @@ if 'state' not in st.session_state:
         "possible_causes": [],
         "possible_solutions": [],
         "noises": [],
+        "car_details": [],
         "changed_parts": [],
         "chat_response": "",
         "user_question": "",
@@ -91,13 +92,13 @@ if 'state' not in st.session_state:
     }
 
 with st.form("diagnostic_form"):
-    col1,col2= st.columns(2)
-    with col1:
-        st.text_area("Beschreibung des Problems", placeholder="Beschreiben Sie das Problem Ihres Fahrzeugs... Bitte geben Sie auch das fahrzeug inklusive Baujahr an.", height=200)
+    submit_btn = st.form_submit_button("Diagnose starten")
 
-    submit_button = st.form_submit_button(label='Diagnose starten')
+    col1= st.columns(1)
+    with col1:
+        st.text_area("Beschreibung des Problems")
     #Verarbeite die Eingaben
-if submit_button:    
+if submit_btn:    
     problem_summary_text = st.session_state.state["description_text"]
     #problem_summary={"description_text":description_text}
      
@@ -107,6 +108,7 @@ if submit_button:
         "chat_history": "",
         "user_question": "",
         "chat_response": "",
+        "car_details":"",
         "description_text":"" ,
         "affected_parts": "",
         "affected_beaviors": "",
@@ -115,58 +117,94 @@ if submit_button:
         "noises": "",
         "changed_parts": "",
     })
+    with st.spinner("Generating Diagnosis..."):
+        result = graph.invoke(st.session_state.state)
+        st.session_state.state.update(result)
+        if result.get("possible_solutions"):
+            st.success("Diagnosis Created")
+        else:
+            st.error("Failed to generate Diagnosis.")
 #here########################
 #layout
-if st.session_state.state.get("problem_summary_text"):
-    col_description, col_chat = st.columns(0,1)
-    col_btn1,col_btn2,col_btn3,col_btn4 = st.columns(4)
-    with col_btn1:
-        if st.button("Diagnose starten"):
-            with st.spinner("Diagnose wird durchgeführt..."):
-                result=description_text.description_text(st.session_state.state)
-                st.session_state.upade(result)
+if st.session_state.state.get("possible_solutions") :
+    col_itin, col_chat = st.columns([3, 2])
 
-    with col_btn2:
-        if st.button("possible_causes"):
-            with st.spinner("Mögliche Ursachen werden ermittelt..."):
-                result=possible_causes.possible_causes(st.session_state.state)
-                st.session_state.update(result)
-    
-    with col_btn3:
-        if st.button("possible_solutions"):
-            with st.spinner("Mögliche Lösungen werden ermittelt..."):
-                result=possible_solutions.possible_solutions(st.session_state.state)
-                st.session_state.update(result)
-    
-    with col_btn4:
-        if st.button("Exportieren"):
-            with st.spinner("Exportiere Diagnose..."):
-                pdf_path=export_to_pdf(st.session_state.state["problem_summary", "chat_history","noises","changed_parts","affected_parts","affected_beaviors","possible_causes","possible_solutions"])
-                if pdf_path:
-                    with open(pdf_path, "rb") as pdf_file:
-                        st.download_button(
-                            label="Download Diagnose PDF",
-                            data=pdf_file,
-                            file_name="diagnose_report.pdf",
-                            mime="application/pdf"
-                        )
-                st.success("Diagnose erfolgreich exportiert!")
+    with col_itin:
+        st.markdown("### Diagnosed Car Problem")
+        st.markdown(st.session_state.state["possible_solutions"])
+
+        # All agent buttons in one row
+        col_btn1, col_btn2, col_btn3, col_btn4, col_btn5,col_btn6 = st.columns(5)
+        with col_btn1:
+            if st.button("Get Activity Car-info"):
+                with st.spinner("Fetching Car Details..."):
+                    result = identify_car.identify_car(st.session_state.state)
+                    st.session_state.state.update(result)
+        with col_btn2:
+            if st.button("Identify Missbehaviur"):
+                with st.spinner("Detecting missbehaviour..."):
+                    result = behavior.behavior(st.session_state.state)
+                    st.session_state.state.update(result)
+        with col_btn3:
+            if st.button("Analyzing noise"):
+                with st.spinner("Analyzing noise Description..."):
+                    result = noise.noise(st.session_state.state)
+                    st.session_state.state.update(result)
+        with col_btn4:
+            if st.button("New Parts"):
+                with st.spinner("Thinkging about new previously installed Parts..."):
+                    result = new_parts.new_parts(st.session_state.state)
+                    st.session_state.state.update(result)
+        with col_btn5:
+            if st.button("Analyzing Possible Cause"):
+                with st.spinner("Analyzing Causes..."):
+                    result = possible_cause.possible_cause(st.session_state.state)
+                    st.session_state.state.update(result)
+        with col_btn6:
+            if st.button("Analyzing Possible Solutions"):
+                with st.spinner("Analyzing Solutions..."):
+                    result = possible_solution.possible_solution(st.session_state.state)
+                    st.session_state.state.update(result)
+
+        # Display all agent outputs in expanders
+        if st.session_state.state.get("Car Details"):
+            with st.expander("Details of the Car", expanded=False):
+                st.markdown(st.session_state.state["car_details"])
+
+        if st.session_state.state.get("affected_parts"):
+            with st.expander("Faulty Parts", expanded=False):
+                st.markdown(st.session_state.state["affected_parts"])
+
+        if st.session_state.state.get("possible Causes"):
+            with st.expander("Identifyed Problem", expanded=False):
+                st.markdown(st.session_state.state["possible_causes"])
+
+        if st.session_state.state.get("Solution"):
+            with st.expander("possible Solutions", expanded=False):
+                st.markdown(st.session_state.state["possible_solutions"])
+
+        # Export PDF button
+        if st.button("Export as PDF"):
+            pdf_path = export_to_pdf(st.session_state.state["itinerary"])
+            if pdf_path:
+                with open(pdf_path, "rb") as f:
+                    st.download_button("Download Itinerary PDF", f, file_name="itinerary.pdf")
 
     with col_chat:
-        st.markdown("## Chat")
+        st.markdown("### Chat About Your Itinerary")
         for chat in st.session_state.state["chat_history"]:
             with st.chat_message("user"):
                 st.markdown(chat["question"])
             with st.chat_message("assistant"):
                 st.markdown(chat["response"])
-        
-        if user_input:= st.session_state.state["Frage etwas"] :
-            st.session_state.state["user_question"]= user_input
-            with st.spinner("Antwort wird generiert..."):
+
+        if user_input := st.chat_input("Ask something about your itinerary"):
+            st.session_state.state["user_question"] = user_input
+            with st.spinner("Generating response..."):
                 result = chat_agent.chat_node(st.session_state.state)
                 st.session_state.state.update(result)
                 st.rerun()
 else:
-    st.info("Bitte füllen Sie das Formular aus, um eine Diagnose zu starten.")
+    st.info("Fill the form and generate an itinerary to begin.")
                     
             
