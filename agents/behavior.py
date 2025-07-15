@@ -3,14 +3,15 @@ from langchain_community.chat_models import ChatOllama
 import json 
 
 def behavior(state):
-    llm = ChatOllama(model="llama3.2", base_url="http://localhost:11434")
+    llm = ChatOllama(model="llava-llama3", base_url="http://localhost:11434")
     prompt = f"""
-    Using the following description,can you identify all informations about the misbehavior of the car? all information is in the form of a list of strings. 
+    Using the following description,can you identify all informations about the behavior of the car ? like shaking, vibrations, steering issues, braking issues, acceleration issues, etc.Every pice of information could be important for the diagnosis.
     {json.dumps(state['description_text'], indent=2)}
 
-    Every pice of information could be important for the diagnosis, so please include all relevant details.
-    If you cannot identify any of the requested information, return a list with "none" as the only element.
-    If you are unsure about any of the information, add a "maybe"
+    Answer in the in a short detailed text describing the affected behaviors of the car an when they occur.Begin with 'Affected behaviors' 
+    If you cannot identify any behaviors, respond with 'No affected behaviors identified'.
+    Do not include any additional text or explanations, just the affected behaviors.
+
     """
     try:
         result = llm.invoke([HumanMessage(content=prompt)]).content

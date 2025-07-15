@@ -3,7 +3,7 @@ from langchain_community.chat_models import ChatOllama
 import json 
 
 def noise(state):
-    llm = ChatOllama(model="llama3.2", base_url="http://localhost:11434")
+    llm = ChatOllama(model="llava-llama3", base_url="http://localhost:11434")
     prompt = f"""
     Using the following description,can you identify alle informations according to the (if described) niose? all information is in the form of a list of strings. 
     {json.dumps(state['description_text'], indent=2)}

@@ -3,7 +3,7 @@ from langchain_community.chat_models import ChatOllama
 import json 
 
 def new_parts(state):
-    llm = ChatOllama(model="llama3.2", base_url="http://localhost:11434")
+    llm = ChatOllama(model="llava-llama3", base_url="http://localhost:11434")
     prompt = f"""
     Using the following description,can you identify if the user have changed any parts of his car until this request?
     {json.dumps(state['description_text'], indent=2)}

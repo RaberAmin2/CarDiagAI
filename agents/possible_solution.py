@@ -3,7 +3,7 @@ from langchain_community.chat_models import ChatOllama
 import json 
 
 def possible_solution(state):
-    llm = ChatOllama(model="llama3.2", base_url="http://localhost:11434")
+    llm = ChatOllama(model="llava-llama3", base_url="http://localhost:11434")
     prompt = f"""
     Using the following information, can you identify the problem with the car? 
     {json.dumps(state['possible_causes'], indent=2)}
