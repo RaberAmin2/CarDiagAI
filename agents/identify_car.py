@@ -3,7 +3,7 @@ from langchain_community.chat_models import ChatOllama
 import json 
 
 def identify_car(state):
-    llm = ChatOllama(model="llava-llama3", base_url="http://localhost:11434")
+    llm = ChatOllama(model="mistral", base_url="http://localhost:11434")
     prompt = f"""
     Using the following description,can you identify the car brand, the model and the engine, the  transmission and the manufacturing year?
     If the description is not sufficient, try to extract the necessary details from the text for example which car model was when produced, which engine was used, which transmission was used and which year it was produced.

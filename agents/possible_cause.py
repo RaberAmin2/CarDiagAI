@@ -3,17 +3,18 @@ from langchain_community.chat_models import ChatOllama
 import json 
 
 def possible_cause(state):
-    llm = ChatOllama(model="llava-llama3", base_url="http://localhost:11434")
+    llm = ChatOllama(model="mistral3", base_url="http://localhost:11434")
     prompt = f"""
-    According to the following problem description, can you describe the possible solutions for the car?
-     Car Info:{json.dumps(state['car_details'], indent=2)}
+    According to the following Descriptions of the car identify the possible causes of the problem by thinking like a mechanic.
+    Car Info:{json.dumps(state['car_details'], indent=2)}
     Problem Description: {state['description_text']}
-    Affected Parts: {json.dumps(state['affected_parts'], indent=2)}
     Affected Behaviors: {json.dumps(state['affected_beaviors'], indent=2)}
     Noises: {json.dumps(state['noises'], indent=2)}
     Changed Parts: {json.dumps(state['changed_parts'], indent=2)}
-    If you could tell the solution also tell if it is possible to fix it yourself or if you need a mechanic.
-    If you cannot identify a solution, return the string "Unknown Solution Code:4".
+    Respond with a detailed text that includes the most likly causes of the problem.
+    Even if the did not provide all the information about the car or the problem, try to identify the possible causes based on the available information.
+    But do not make assumptions about the car or the problem, only use the provided information. You can use your knowledge about cars to identify the possible causes.
+    If you cannot identify any possible causes, respond with 'Not enough information to identify the possible causes'.
     """
     try:
         result = llm.invoke([HumanMessage(content=prompt)]).content

@@ -3,9 +3,9 @@ from langchain_community.chat_models import ChatOllama
 import json 
 
 def behavior(state):
-    llm = ChatOllama(model="llava-llama3", base_url="http://localhost:11434")
+    llm = ChatOllama(model="mistral", base_url="http://localhost:11434")
     prompt = f"""
-    Using the following description,can you identify all informations about the behavior of the car ? like shaking, vibrations, steering issues, braking issues, acceleration issues, etc.Every pice of information could be important for the diagnosis.
+    Using the following description, identify all informations about the behavior of the car. like shaking, vibrations, steering issues, braking issues, acceleration issues, etc.Every pice of information could be important for the diagnosis.
     {json.dumps(state['description_text'], indent=2)}
 
     Answer in the in a short detailed text describing the affected behaviors of the car an when they occur.Begin with 'Affected behaviors' 

@@ -3,7 +3,7 @@ from langchain_community.chat_models import ChatOllama
 import json
 
 def chat_node(state):
-    llm = ChatOllama(model="llava-llama3", base_url="http://localhost:11434")
+    llm = ChatOllama(model="mistral", base_url="http://localhost:11434")
     prompt = f"""
     Context:
     description: {json.dumps(state['description_text'], indent=2)}
