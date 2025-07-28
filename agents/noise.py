@@ -2,8 +2,11 @@ from langchain_core.messages import HumanMessage
 from langchain_community.chat_models import ChatOllama
 import json 
 
+with open('agents/bots_settings.json') as f:
+    bots = json.load(f)
+
 def noise(state):
-    llm = ChatOllama(model="mistral", base_url="http://localhost:11434")
+    llm = ChatOllama(model=bots["noise_agent"], base_url="http://localhost:11434",temperature=0)
     prompt = f"""
     Using the following description,can you identify all the noises that are present in the car which may indicate a problem? if the user tried to describe the noises, please extract the relevant information.
     {json.dumps(state['description_text'], indent=2)}

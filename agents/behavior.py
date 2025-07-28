@@ -2,8 +2,11 @@ from langchain_core.messages import HumanMessage
 from langchain_community.chat_models import ChatOllama
 import json 
 
+with open('agents/bots_settings.json') as f:
+    bots = json.load(f)
+                     
 def behavior(state):
-    llm = ChatOllama(model="mistral", base_url="http://localhost:11434")
+    llm = ChatOllama(model=bots["behavior_agent"], base_url="http://localhost:11434")
     prompt = f"""
     Using the following description, identify all informations about the behavior of the car. like shaking, vibrations, steering issues, braking issues, acceleration issues, etc.Every pice of information could be important for the diagnosis.
     {json.dumps(state['description_text'], indent=2)}

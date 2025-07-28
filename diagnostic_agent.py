@@ -18,6 +18,7 @@ import os
 from agents import identify_car,new_parts,noise,behavior,possible_solution,chat_agent,possible_cause
 from utils_export import export_to_pdf
 
+
 #lädt umgebungs variabeln
 load_dotenv()
 
@@ -130,38 +131,38 @@ if st.session_state.state.get("possible_solutions") :
         st.markdown("### Diagnosed Car Problem")
         st.markdown(st.session_state.state["possible_solutions"])
 
-        # All agent buttons in one row
-        col_btn1, col_btn2, col_btn3, col_btn4, col_btn5,col_btn6 = st.columns(6)
-        with col_btn1:
-            if st.button("Get Activity Car-info"):
-                with st.spinner("Fetching Car Details..."):
-                    result = identify_car.identify_car(st.session_state.state)
-                    st.session_state.state.update(result)
-        with col_btn2:
-            if st.button("Identify Missbehaviur"):
-                with st.spinner("Detecting missbehaviour..."):
-                    result = behavior.behavior(st.session_state.state)
-                    st.session_state.state.update(result)
-        with col_btn3:
-            if st.button("Analyzing noise"):
-                with st.spinner("Analyzing noise Description..."):
-                    result = noise.noise(st.session_state.state)
-                    st.session_state.state.update(result)
-        with col_btn4:
-            if st.button("New Parts"):
-                with st.spinner("Thinkging about new previously installed Parts..."):
-                    result = new_parts.new_parts(st.session_state.state)
-                    st.session_state.state.update(result)
-        with col_btn5:
-            if st.button("Analyzing Possible Cause"):
-                with st.spinner("Analyzing Causes..."):
-                    result = possible_cause.possible_cause(st.session_state.state)
-                    st.session_state.state.update(result)
-        with col_btn6:
-            if st.button("Analyzing Possible Solutions"):
-                with st.spinner("Analyzing Solutions..."):
-                    result = possible_solution.possible_solution(st.session_state.state)
-                    st.session_state.state.update(result)
+        # # All agent buttons in one row
+        # col_btn1, col_btn2, col_btn3, col_btn4, col_btn5,col_btn6 = st.columns(6)
+        # with col_btn1:
+        #     if st.button("Get Activity Car-info"):
+        #         with st.spinner("Fetching Car Details..."):
+        #             result = identify_car.identify_car(st.session_state.state)
+        #             st.session_state.state.update(result)
+        # with col_btn2:
+        #     if st.button("Identify Missbehaviur"):
+        #         with st.spinner("Detecting missbehaviour..."):
+        #             result = behavior.behavior(st.session_state.state)
+        #             st.session_state.state.update(result)
+        # with col_btn3:
+        #     if st.button("Analyzing noise"):
+        #         with st.spinner("Analyzing noise Description..."):
+        #             result = noise.noise(st.session_state.state)
+        #             st.session_state.state.update(result)
+        # with col_btn4:
+        #     if st.button("New Parts"):
+        #         with st.spinner("Thinkging about new previously installed Parts..."):
+        #             result = new_parts.new_parts(st.session_state.state)
+        #             st.session_state.state.update(result)
+        # with col_btn5:
+        #     if st.button("Analyzing Possible Cause"):
+        #         with st.spinner("Analyzing Causes..."):
+        #             result = possible_cause.possible_cause(st.session_state.state)
+        #             st.session_state.state.update(result)
+        # with col_btn6:
+        #     if st.button("Analyzing Possible Solutions"):
+        #         with st.spinner("Analyzing Solutions..."):
+        #             result = possible_solution.possible_solution(st.session_state.state)
+        #             st.session_state.state.update(result)
 
         # Display all agent outputs in expanders
         if st.session_state.state.get("Car Details"):
@@ -182,26 +183,26 @@ if st.session_state.state.get("possible_solutions") :
 
         # Export PDF button
         if st.button("Export as PDF"):
-            pdf_path = export_to_pdf(st.session_state.state["description_text"]+st.session_state.state["affected_beaviors"],)
+            pdf_path = export_to_pdf("The Users description was : "+st.session_state.state["description_text"]+" Agent for car Misbehaviur extracted : "+st.session_state.state["affected_beaviors"]+" Agent for noise extractain said : "+st.session_state.state["noises"]+" Agent for Replaced Parts extracted : "+st.session_state.state["changed_parts"]+"Agent for car information said : "+st.session_state.state["car_details"]+"Agent for possible causes said : "+st.session_state.state["possible_causes"]+"Agent for possible solutions said : "+st.session_state.state["possible_solutions"],)
             if pdf_path:
                 with open(pdf_path, "rb") as f:
-                    st.download_button("Download Itinerary PDF", f, file_name="itinerary.pdf")
+                    st.download_button("Download Diagnosis PDF", f, file_name="Diagnosis.pdf")
 
     with col_chat:
-        st.markdown("### Chat About Your Itinerary")
+        st.markdown("### Chat About Your Problem")
         for chat in st.session_state.state["chat_history"]:
             with st.chat_message("user"):
                 st.markdown(chat["question"])
             with st.chat_message("assistant"):
                 st.markdown(chat["response"])
 
-        if user_input := st.chat_input("Ask something about your itinerary"):
+        if user_input := st.chat_input("Ask something about your Problem"):
             st.session_state.state["user_question"] = user_input
             with st.spinner("Generating response..."):
                 result = chat_agent.chat_node(st.session_state.state)
                 st.session_state.state.update(result)
                 st.rerun()
 else:
-    st.info("Fill the form and generate an itinerary to begin.")
+    st.info("")
                     
             

@@ -2,8 +2,11 @@ from langchain_core.messages import HumanMessage
 from langchain_community.chat_models import ChatOllama
 import json 
 
+with open('agents/bots_settings.json') as f:
+    bots = json.load(f)
+
 def possible_cause(state):
-    llm = ChatOllama(model="mistral3", base_url="http://localhost:11434")
+    llm = ChatOllama(model=bots["possible_cause_agent"], base_url="http://localhost:11434")
     prompt = f"""
     According to the following Descriptions of the car identify the possible causes of the problem by thinking like a mechanic.
     Car Info:{json.dumps(state['car_details'], indent=2)}
