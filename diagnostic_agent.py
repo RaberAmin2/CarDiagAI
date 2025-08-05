@@ -100,14 +100,17 @@ with st.form("diagnostic_form"):
     #Verarbeite die Eingaben
     submit_btn = st.form_submit_button("Diagnose starten")
 
-if submit_btn:    
-    #problem_summary={"description_text":description_text}
+if submit_btn:
+    if not a.strip():
+        st.warning("Bitte gib eine Beschreibung des Problems ein.")
+        st.stop()
+
     st.session_state.state.update({
-        "chat_history": "",
+        "chat_history": [],
         "user_question": "",
         "chat_response": "",
-        "car_details":"",
-        "description_text":a,
+        "car_details": "",
+        "description_text": a,
         "affected_parts": "",
         "affected_beaviors": "",
         "possible_causes": "",
@@ -115,6 +118,7 @@ if submit_btn:
         "noises": "",
         "changed_parts": "",
     })
+
     with st.spinner("Generating Diagnosis..."):
         result = graph.invoke(st.session_state.state)
         st.session_state.state.update(result)
@@ -122,87 +126,86 @@ if submit_btn:
             st.success("Diagnosis Created")
         else:
             st.error("Failed to generate Diagnosis.")
-#here########################
-#layout
-if st.session_state.state.get("possible_solutions") :
+
+# === Anzeige der Diagnose ===
+if st.session_state.state.get("possible_solutions"):
     col_itin, col_chat = st.columns([3, 2])
-
     with col_itin:
-        st.markdown("### Diagnosed Car Problem")
-        st.markdown(st.session_state.state["possible_solutions"])
+        st.markdown("### 🧠 Diagnose")
 
-        # # All agent buttons in one row
-        # col_btn1, col_btn2, col_btn3, col_btn4, col_btn5,col_btn6 = st.columns(6)
-        # with col_btn1:
-        #     if st.button("Get Activity Car-info"):
-        #         with st.spinner("Fetching Car Details..."):
-        #             result = identify_car.identify_car(st.session_state.state)
-        #             st.session_state.state.update(result)
-        # with col_btn2:
-        #     if st.button("Identify Missbehaviur"):
-        #         with st.spinner("Detecting missbehaviour..."):
-        #             result = behavior.behavior(st.session_state.state)
-        #             st.session_state.state.update(result)
-        # with col_btn3:
-        #     if st.button("Analyzing noise"):
-        #         with st.spinner("Analyzing noise Description..."):
-        #             result = noise.noise(st.session_state.state)
-        #             st.session_state.state.update(result)
-        # with col_btn4:
-        #     if st.button("New Parts"):
-        #         with st.spinner("Thinkging about new previously installed Parts..."):
-        #             result = new_parts.new_parts(st.session_state.state)
-        #             st.session_state.state.update(result)
-        # with col_btn5:
-        #     if st.button("Analyzing Possible Cause"):
-        #         with st.spinner("Analyzing Causes..."):
-        #             result = possible_cause.possible_cause(st.session_state.state)
-        #             st.session_state.state.update(result)
-        # with col_btn6:
-        #     if st.button("Analyzing Possible Solutions"):
-        #         with st.spinner("Analyzing Solutions..."):
-        #             result = possible_solution.possible_solution(st.session_state.state)
-        #             st.session_state.state.update(result)
+        st.markdown("#### 🚘 Fahrzeuginfo")
+        st.markdown(f"> {st.session_state.state['car_details']}")
 
-        # Display all agent outputs in expanders
-        if st.session_state.state.get("Car Details"):
-            with st.expander("Details of the Car", expanded=False):
-                st.markdown(st.session_state.state["car_details"])
+        st.markdown("#### 🛠️ Erkanntes Fehlverhalten")
+        st.markdown(f"> {st.session_state.state['affected_beaviors']}")
 
-        if st.session_state.state.get("affected_parts"):
-            with st.expander("Faulty Parts", expanded=False):
-                st.markdown(st.session_state.state["affected_parts"])
+        st.markdown("#### 🔊 Geräusche")
+        st.markdown(f"> {st.session_state.state['noises']}")
 
-        if st.session_state.state.get("possible Causes"):
-            with st.expander("Identifyed Problem", expanded=False):
-                st.markdown(st.session_state.state["possible_causes"])
+        st.markdown("#### 🧩 Erkannte defekte Teile")
+        st.markdown(f"> {st.session_state.state['affected_parts']}")
 
-        if st.session_state.state.get("Solution"):
-            with st.expander("possible Solutions", expanded=False):
-                st.markdown(st.session_state.state["possible_solutions"])
+        st.markdown("#### 🔄 Ersetzte Teile")
+        st.markdown(f"> {st.session_state.state['changed_parts']}")
 
-        # Export PDF button
-        if st.button("Export as PDF"):
-            pdf_path = export_to_pdf("The Users description was : "+st.session_state.state["description_text"]+" Agent for car Misbehaviur extracted : "+st.session_state.state["affected_beaviors"]+" Agent for noise extractain said : "+st.session_state.state["noises"]+" Agent for Replaced Parts extracted : "+st.session_state.state["changed_parts"]+"Agent for car information said : "+st.session_state.state["car_details"]+"Agent for possible causes said : "+st.session_state.state["possible_causes"]+"Agent for possible solutions said : "+st.session_state.state["possible_solutions"],)
+        st.markdown("#### ❓ Mögliche Ursachen")
+        for line in st.session_state.state["possible_causes"].split("\n"):
+            st.markdown(f"- {line}")
+
+        st.markdown("#### 🛠️ Lösungsvorschläge")
+        for line in st.session_state.state["possible_solutions"].split("\n"):
+            st.markdown(f"- {line}")
+
+        # === PDF Export ===
+        if st.button("📄 Diagnose als PDF exportieren"):
+            pdf_path = export_to_pdf(
+                "Die Nutzereingabe war: " + st.session_state.state["description_text"] +
+                "\n\nFehlverhalten: " + st.session_state.state["affected_beaviors"] +
+                "\n\nGeräusche: " + st.session_state.state["noises"] +
+                "\n\nErsetzte Teile: " + st.session_state.state["changed_parts"] +
+                "\n\nFahrzeugdetails: " + st.session_state.state["car_details"] +
+                "\n\nMögliche Ursachen: " + st.session_state.state["possible_causes"] +
+                "\n\nLösungen: " + st.session_state.state["possible_solutions"]
+            )
             if pdf_path:
                 with open(pdf_path, "rb") as f:
-                    st.download_button("Download Diagnosis PDF", f, file_name="Diagnosis.pdf")
+                    st.download_button("📥 PDF herunterladen", f, file_name="Diagnose.pdf")
+
+        # === Optionaler Agenten-Debug-Modus ===
+        if st.checkbox("🔧 Manuellen Agenten-Modus aktivieren"):
+            st.markdown("Agenten manuell ausführen:")
+            col_btn1, col_btn2, col_btn3 = st.columns(3)
+            with col_btn1:
+                if st.button("🚘 Fahrzeuginfo"):
+                    with st.spinner("Fahrzeuginfo wird geladen..."):
+                        result = identify_car.identify_car(st.session_state.state)
+                        st.session_state.state.update(result)
+            with col_btn2:
+                if st.button("📈 Fehlverhalten analysieren"):
+                    with st.spinner("Analysiere Verhalten..."):
+                        result = behavior.behavior(st.session_state.state)
+                        st.session_state.state.update(result)
+            with col_btn3:
+                if st.button("🔊 Geräusche analysieren"):
+                    with st.spinner("Analysiere Geräusche..."):
+                        result = noise.noise(st.session_state.state)
+                        st.session_state.state.update(result)
+            # ... weitere Buttons je nach Bedarf
 
     with col_chat:
-        st.markdown("### Chat About Your Problem")
+        st.markdown("### 💬 Chat zur Diagnose")
         for chat in st.session_state.state["chat_history"]:
             with st.chat_message("user"):
                 st.markdown(chat["question"])
             with st.chat_message("assistant"):
                 st.markdown(chat["response"])
 
-        if user_input := st.chat_input("Ask something about your Problem"):
+        if user_input := st.chat_input("Frage etwas zur Diagnose..."):
             st.session_state.state["user_question"] = user_input
-            with st.spinner("Generating response..."):
+            with st.spinner("Antwort wird generiert..."):
                 result = chat_agent.chat_node(st.session_state.state)
                 st.session_state.state.update(result)
                 st.rerun()
 else:
-    st.info("")
-                    
+    st.info("Bitte gib eine Problembeschreibung ein und starte die Diagnose.")
             

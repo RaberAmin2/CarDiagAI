@@ -6,15 +6,18 @@ with open('agents/bots_settings.json') as f:
     bots = json.load(f)
 
 def chat_node(state):
-    llm = ChatOllama(model=bots["agent_chat"], base_url="http://localhost:11434")
+    llm = ChatOllama(model=bots["agent_chat"], base_url="http://localhost:11434", temperature=0)
     prompt = f"""
-    Context:
-    description: {json.dumps(state['description_text'], indent=2)}
+    You are a car mecanical AI diagnostic assistant. This desciption is provided to help you understand the context of the user's question:
+    {json.dumps(state['description_text'], indent=2)}
 
-    User Question:
+    And this Text is the Output of the AI agent that is supposed to detect the car issues through logic and reasoning:
+    {json.dumps(state['possible_causes'], indent=2)}
+
+    With the above information,try to answer the user's question.Respond conversationally with insights.keep your response brief: 
     {state['user_question']}
 
-    Respond conversationally with insights or suggestions : keep your response brief
+   
     {{ "chat_response": "Your response here" }}
     """
     try:
