@@ -1,34 +1,68 @@
 from langchain_core.messages import HumanMessage
 from langchain_community.chat_models import ChatOllama
 import json
+import logging
 
-with open('agents/bots_settings.json') as f:
-    bots = json.load(f)
+# Lade Modelleinstellungen sicher
+try:
+    with open('agents/bots_settings.json') as f:
+        bots = json.load(f)
+except Exception as e:
+    logging.warning(f"⚠️ Konnte bots_settings.json nicht laden: {e}")
+    bots = {}
 
+# Hauptfunktion
 def chat_node(state):
-    llm = ChatOllama(model=bots["agent_chat"], base_url="http://localhost:11434", temperature=0)
+    # Sicheres Abrufen mit Fallback auf 'llama3'
+    model_name = bots.get("agent_chat", "llama3")
+
+    # LLM initialisieren
+    llm = ChatOllama(model=model_name, base_url="http://localhost:11434", temperature=0)
+
+    # Prompt definieren
     prompt = f"""
-    You are a car mecanical AI diagnostic assistant. This desciption is provided to help you understand the context of the user's question:
-    {json.dumps(state['description_text'], indent=2)}
+You are a car diagnostic assistant AI.
+Use the following problem description and analysis to answer the user's question briefly and helpfully.
 
-    And this Text is the Output of the AI agent that is supposed to detect the car issues through logic and reasoning:
-    {json.dumps(state['possible_causes'], indent=2)}
+Problem description:
+{json.dumps(state.get('description_text', ''), indent=2)}
 
-    With the above information,try to answer the user's question.Respond conversationally with insights.keep your response brief: 
-    {state['user_question']}
+Identified possible causes:
+{json.dumps(state.get('possible_causes', ''), indent=2)}
 
-   
-    {{ "chat_response": "Your response here" }}
-    """
+User question:
+{state.get('user_question', '')}
+
+Respond ONLY in the following JSON format:
+{{ "chat_response": "Your response here" }}
+"""
+
     try:
-        result = llm.invoke([HumanMessage(content=prompt)]).content
+        result = llm.invoke([HumanMessage(content=prompt)]).content.strip()
+
+        # Versuche, JSON zu parsen
         try:
-            parsed = json.loads(result.strip())
-            response = parsed.get("chat_response", result.strip())
+            parsed = json.loads(result)
+            response = parsed.get("chat_response", result)
         except json.JSONDecodeError:
-            response = result.strip()
-        chat_entry = {"question": state['user_question'], "response": response}
+            logging.warning("⚠️ LLM-Antwort konnte nicht als JSON interpretiert werden.")
+            response = result  # Fallback: rohe Textantwort
+
+        # Chatverlauf aktualisieren
+        chat_entry = {
+            "question": state.get('user_question', ''),
+            "response": response
+        }
         chat_history = state.get('chat_history', []) + [chat_entry]
-        return {"chat_response": response, "chat_history": chat_history}
+
+        return {
+            "chat_response": response,
+            "chat_history": chat_history
+        }
+
     except Exception as e:
-        return {"chat_response": "", "warning": str(e)}
+        logging.error(f"❌ Fehler im Chat-Agent: {e}")
+        return {
+            "chat_response": "",
+            "warning": str(e)
+        }

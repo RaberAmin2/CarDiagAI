@@ -6,7 +6,7 @@ with open('agents/bots_settings.json') as f:
     bots = json.load(f)
 
 def new_parts(state):
-    llm = ChatOllama(model=bots["new_parts_agent"], base_url="http://localhost:11434",temperature=0)
+    llm = ChatOllama(model=bots["new_parts_agent"], base_url="http://localhost:11434")
     prompt = f"""
     Using the following description,extract the information about new parts that may have been replaced in the car.  
     {json.dumps(state['description_text'], indent=2)}

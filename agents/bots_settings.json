@@ -1,9 +1,9 @@
 {
-  "behavior_agent": "llama3",
-  "noise_agent": "mistral",
-  "new_parts_agent": "llama3",
-  "identify_car_agent": "mistral",
-  "possible_cause_agent": "mixtral",
-  "possible_solution_agent": "mixtral",
-  "chat_agent": "zephyr"
+  "agent_chat": "llama3:instruct",
+  "behavior_agent": "Llama3.2",
+  "identify_car_agent": "Llama3.2",
+  "new_parts_agent": "llama3.2",
+  "noise_agent": "llama3.2",
+  "possible_solution_agent": "llama3:instruct",
+  "possible_cause_agent": "llama3:instruct"
 }
