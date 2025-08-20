@@ -6,17 +6,29 @@ with open('agents/bots_settings.json') as f:
     bots = json.load(f)
 
 def noise(state):
-    llm = ChatOllama(model=bots["noise_agent"], base_url="http://localhost:11434")
+    llm = ChatOllama(model=bots["noise_agent"], base_url="http://localhost:11434", temperature=0)
+
     prompt = f"""
-    Using the following description,can you identify all the noises that are present in the car which may indicate a problem? if the user tried to describe the noises, please extract the relevant information.
+    Task: Extract only the noise-related information from the following description.
+
+    Description:
     {json.dumps(state['description_text'], indent=2)}
 
-    respond with a short text that includes Noise sound, pattern,frequency, and any other relevant details.
-    Do not include any other information or text, just the noises.Begin your response with 'Noises'.
-    if there are no noises, respond with 'No noises were described'
+    Required data:
+    - Noise type / sound
+    - Pattern or progression
+    - Frequency
+    - Other relevant details
+
+    Response format (no explanations, no extra text):
+    NOISES: {{sound}}, {{pattern}}, {{frequency}}, {{details}}
+
+    If no noises are described:
+    NOISES: None
     """
+
     try:
-        result = llm.invoke([HumanMessage(content=prompt)]).content
-        return {"noises": result.strip()}
+        result = llm.invoke([HumanMessage(content=prompt)]).content.strip()
+        return {"noises": result}
     except Exception as e:
         return {"noises": "", "warning": str(e)}

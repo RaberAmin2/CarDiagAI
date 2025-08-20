@@ -16,24 +16,27 @@ from langchain_community.utilities import GoogleSerperAPIWrapper
 from dotenv import load_dotenv
 import os
 import logging
-from agents import identify_car, new_parts, noise, behavior, possible_solution, chat_agent, possible_cause
+from agents import (
+    identify_car,
+    new_parts,
+    noise,
+    behavior,
+    possible_solution,
+    chat_agent,
+    possible_cause,
+)
 from utils_export import export_to_pdf
+import requests
+
 
 # Logging konfigurieren
 logging.basicConfig(
     filename="diagnostic_agent.log",
     level=logging.DEBUG,
     format="%(asctime)s [%(levelname)s] %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S"
+    datefmt="%Y-%m-%d %H:%M:%S",
 )
-logging.info("\U0001F680 DiaKari Diagnostic Agent gestartet")
-
-# Umgebungsvariablen laden
-try:
-    load_dotenv()
-    logging.info("✅ Umgebungsvariablen erfolgreich geladen.")
-except Exception as e:
-    logging.error(f"❌ Fehler beim Laden der .env Datei: {e}")
+logging.info("\U0001f680 DiaKari Diagnostic Agent gestartet")
 
 # UI Setup
 st.set_page_config(page_title="AI Car Diag", layout="wide", page_icon="icon.png")
@@ -45,6 +48,7 @@ if debug_mode:
         test_text = file.read().strip()
 else:
     test_text = ""
+
 
 # Statusdefinition
 class GraphState(TypedDict):
@@ -60,6 +64,7 @@ class GraphState(TypedDict):
     user_question: str
     chat_history: Annotated[list[dict], "Chat history for the conversation"]
 
+
 # Langgraph Workflow
 workflow = StateGraph(GraphState)
 workflow.add_node("identify_car", identify_car.identify_car)
@@ -69,6 +74,8 @@ workflow.add_node("behavior", behavior.behavior)
 workflow.add_node("possible_solution", possible_solution.possible_solution)
 workflow.add_node("possible_cause", possible_cause.possible_cause)
 workflow.add_node("chat", chat_agent.chat_node)
+# workflow.add_node("stop_models", stop_models_node)
+
 
 workflow.set_entry_point("identify_car")
 workflow.add_edge("identify_car", "behavior")
@@ -78,12 +85,14 @@ workflow.add_edge("new_parts", "possible_cause")
 workflow.add_edge("possible_cause", "possible_solution")
 workflow.add_edge("possible_solution", "chat")
 workflow.add_edge("chat", END)
+# workflow.add_edge("chat", "stop_models")
+# workflow.add_edge("stop_models", END)
 graph = workflow.compile()
 
 # UI Start
 st.markdown("# AI Car Diagnostic Agent")
 
-if 'state' not in st.session_state:
+if "state" not in st.session_state:
     logging.info("🔄 Session State wird initialisiert.")
     st.session_state.state = {
         "description_text": "",
@@ -99,6 +108,8 @@ if 'state' not in st.session_state:
         "chat_history": [],
     }
 
+a = ""
+
 with st.form("diagnostic_form"):
     col1 = st.columns(1)
     if col1:
@@ -112,19 +123,21 @@ if submit_btn:
         st.warning("Bitte gib eine Beschreibung des Problems ein.")
         st.stop()
 
-    st.session_state.state.update({
-        "chat_history": [],
-        "user_question": "",
-        "chat_response": "",
-        "car_details": "",
-        "description_text": a,
-        "affected_parts": "",
-        "affected_beaviors": "",
-        "possible_causes": "",
-        "possible_solutions": "",
-        "noises": "",
-        "changed_parts": "",
-    })
+    st.session_state.state.update(
+        {
+            "chat_history": [],
+            "user_question": "",
+            "chat_response": "",
+            "car_details": "",
+            "description_text": a,
+            "affected_parts": "",
+            "affected_beaviors": "",
+            "possible_causes": "",
+            "possible_solutions": "",
+            "noises": "",
+            "changed_parts": "",
+        }
+    )
     logging.debug(f"📅 Eingabebeschreibung: {a}")
 
     with st.spinner("Generating Diagnosis..."):
@@ -173,17 +186,26 @@ if st.session_state.state.get("possible_solutions"):
         if st.button("📄 Diagnose als PDF exportieren"):
             try:
                 pdf_path = export_to_pdf(
-                    "Die Nutzereingabe war: " + st.session_state.state["description_text"] +
-                    "\n\nFehlverhalten: " + st.session_state.state["affected_beaviors"] +
-                    "\n\nGeräusche: " + st.session_state.state["noises"] +
-                    "\n\nErsetzte Teile: " + st.session_state.state["changed_parts"] +
-                    "\n\nFahrzeugdetails: " + st.session_state.state["car_details"] +
-                    "\n\nMögliche Ursachen: " + st.session_state.state["possible_causes"] +
-                    "\n\nLösungen: " + st.session_state.state["possible_solutions"]
+                    "Die Nutzereingabe war: "
+                    + st.session_state.state["description_text"]
+                    + "\n\nFehlverhalten: "
+                    + st.session_state.state["affected_beaviors"]
+                    + "\n\nGeräusche: "
+                    + st.session_state.state["noises"]
+                    + "\n\nErsetzte Teile: "
+                    + st.session_state.state["changed_parts"]
+                    + "\n\nFahrzeugdetails: "
+                    + st.session_state.state["car_details"]
+                    + "\n\nMögliche Ursachen: "
+                    + st.session_state.state["possible_causes"]
+                    + "\n\nLösungen: "
+                    + st.session_state.state["possible_solutions"]
                 )
                 logging.info(f"📄 PDF-Export erfolgreich: {pdf_path}")
                 with open(pdf_path, "rb") as f:
-                    st.download_button("📅 PDF herunterladen", f, file_name="Diagnose.pdf")
+                    st.download_button(
+                        "📅 PDF herunterladen", f, file_name="Diagnose.pdf"
+                    )
             except Exception as e:
                 logging.error(f"❌ PDF-Export fehlgeschlagen: {e}")
                 st.error("Fehler beim PDF-Export.")
@@ -232,3 +254,16 @@ if st.session_state.state.get("possible_solutions"):
 else:
     logging.info("ℹ️ Kein Text eingegeben. Warte auf Benutzereingabe.")
     st.info("Bitte gib eine Problembeschreibung ein und starte die Diagnose.")
+
+
+def stop_ollama_models():
+    try:
+        response = requests.post("http://localhost:11434/api/stop")
+        print(f"🛑 Ollama stop response: {response.status_code}")
+    except Exception as e:
+        print(f"❌ Fehler beim Modell-Stop: {e}")
+
+
+def stop_models_node(state):
+    stop_ollama_models()
+    return state

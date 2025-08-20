@@ -1,23 +1,49 @@
+# agents/behavior.py
+
 from langchain_core.messages import HumanMessage
 from langchain_community.chat_models import ChatOllama
-import json 
+import json
+import logging
 
-with open('agents/bots_settings.json') as f:
+# Lade zentrale Modellkonfiguration
+with open("agents/bots_settings.json") as f:
     bots = json.load(f)
-                     
-def behavior(state):
-    llm = ChatOllama(model=bots["behavior_agent"], base_url="http://localhost:11434")
-    prompt = f"""
-    Using the following description, identify all informations about the behavior of the car. like shaking, vibrations, steering issues, braking issues, acceleration issues, etc.Every pice of information could be important for the diagnosis.
-    {json.dumps(state['description_text'], indent=2)}
 
-    Answer in the in a short detailed text describing the affected behaviors of the car an when they occur.Begin with 'Affected behaviors' 
-    If you cannot identify any behaviors, respond with 'No affected behaviors identified'.
-    Do not include any additional text or explanations, just the affected behaviors.
+# Optional: Logging aktivieren
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
-    """
+def behavior(state: dict) -> dict:
     try:
-        result = llm.invoke([HumanMessage(content=prompt)]).content
-        return {"affected_beaviors": result.strip()}
+        llm = ChatOllama(
+            model=bots.get("behavior_agent", "llama3"),
+            base_url="http://localhost:11434",
+            temperature=0
+        )
+
+        prompt = f"""
+Using the following description, identify all information about the behavior of the car (e.g., shaking, vibrations, steering issues, braking issues, acceleration issues, etc.). Every piece of information could be important for the diagnosis.
+
+Description:
+{state.get('description_text', '')}
+
+Answer in a short, clear text starting with 'Affected behaviors: ...'.  
+If no behavior can be identified, reply with 'No affected behaviors identified'.  
+Do not add explanations or extra formatting.
+"""
+
+        response = llm.invoke([HumanMessage(content=prompt)])
+        result = response.content.strip()
+
+        logger.info(f"[Behavior Agent] Output: {result}")
+
+        return {
+            "affected_beaviors": result
+        }
+
     except Exception as e:
-        return {"affected_beaviors": "", "warning": str(e)}
+        logger.error(f"[Behavior Agent] Error: {str(e)}")
+        return {
+            "affected_beaviors": "No affected behaviors identified.",
+            "warning": str(e)
+        }
