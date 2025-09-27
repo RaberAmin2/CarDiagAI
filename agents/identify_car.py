@@ -9,25 +9,22 @@ def identify_car(state):
     llm = ChatOllama(model=bots["identify_car_agent"], base_url="http://localhost:11434", temperature=0)
 
     prompt = f"""
-    Task: Extract only vehicle details from the following problem description.
+    Task: Extract vehicle details from the following problem description.
+    - Normalize model names and technical details (e.g., Golf VII → Golf 7).
+    - If a detail can be reasonably inferred from the description (e.g., "Golf VII" → Brand: VW, Model: Golf 7), include it.
+    - If a detail cannot be identified or inferred with certainty, write "Unknown".
+    - Always respond in the same language as the description. Do not translate.
 
     Description:
     {json.dumps(state['description_text'], indent=2)}
 
-    Required Data:
-    - Brand
-    - Model
-    - Engine
-    - Transmission
-    - Year
-
     Response format (no extra words, no explanations):
-    CAR_DETAILS: {{brand}}, {{model}}, {{engine}}, {{transmission}}, {{year}}
-
-    If the details cannot be identified:
-    CAR_DETAILS: Unknown
-    Answer in the Language of the input.
-
+    CAR_DETAILS:
+    - Brand: ...
+    - Model: ...
+    - Engine: ...
+    - Transmission: ...
+    - Year: ...
     """
 
     try:

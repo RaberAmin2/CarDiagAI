@@ -9,17 +9,22 @@ def new_parts(state):
     llm = ChatOllama(model=bots["new_parts_agent"], base_url="http://localhost:11434", temperature=0)
 
     prompt = f"""
-    Task: Extract only information about newly replaced parts from the user in the following description.
+    Task: Extract only the parts that the user explicitly mentions as already replaced, exchanged, or newly installed.
+    Normalize all mentioned parts to their standard automotive part names. 
+    Do not include broken, old, or suggested parts. 
+    Always respond in the same language as the description. Do not translate.
 
     Description:
     {json.dumps(state['description_text'], indent=2)}
 
     Response format (no explanations, no extra text):
-    NEW_PARTS: part1, part2, part3
+    NEW_PARTS:
+    - part1
+    - part2
+    - part3
 
-    If no new parts are described:
+    If no replaced parts are mentioned, respond exactly with:
     NEW_PARTS: None
-    Answer in the Language of the input.
     """
 
     try:

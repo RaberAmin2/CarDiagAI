@@ -22,16 +22,26 @@ def behavior(state: dict) -> dict:
         )
 
         prompt = f"""
-Using the following description, identify all information about the behavior of the car (e.g., shaking, vibrations, steering issues, braking issues, acceleration issues, etc.). Every piece of information could be important for the diagnosis.
+Extract only information about the car's behavior from the following description. 
+This includes driving dynamics and performance issues (e.g., shaking, vibrations, steering problems, braking issues, acceleration issues, stalling, pulling, loss of power). 
+Ignore noises, replaced parts, or vehicle specifications.
+
+Normalize the behaviors into clear, concise automotive terms. 
+If the user uses informal phrases, rewrite them as standard behavior descriptions.
 
 Description:
 {state.get('description_text', '')}
 
-Answer in a short, clear text starting with 'Affected behaviors: ...'.  
-If no behavior can be identified, reply with 'No affected behaviors identified'.  
-Do not add explanations or extra formatting.
-Answer in the Language of the input.
+Response format (no explanations, no extra text):
+Affected behaviors:
+- behavior1
+- behavior2
+- behavior3
 
+If no behaviors can be identified, respond exactly with:
+No affected behaviors identified
+
+Always answer in the same language as the input.
 """
 
         response = llm.invoke([HumanMessage(content=prompt)])
@@ -40,12 +50,13 @@ Answer in the Language of the input.
         logger.info(f"[Behavior Agent] Output: {result}")
 
         return {
-            "affected_beaviors": result
+            "affected_behaviors": result
         }
 
     except Exception as e:
         logger.error(f"[Behavior Agent] Error: {str(e)}")
         return {
-            "affected_beaviors": "No affected behaviors identified.",
+            "affected_behaviors": "No affected behaviors identified",
             "warning": str(e)
         }
+

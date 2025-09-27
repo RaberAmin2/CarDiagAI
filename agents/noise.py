@@ -9,24 +9,23 @@ def noise(state):
     llm = ChatOllama(model=bots["noise_agent"], base_url="http://localhost:11434", temperature=0)
 
     prompt = f"""
-    Task: Extract only the noise-related information from the following description.
+    Task: Extract only noise- or sound-related information from the following user description. 
+    Ignore all unrelated information. If no noise is described, respond with "NOISES: None".
+    Always respond in the same language as the description. Do not translate.
 
     Description:
     {json.dumps(state['description_text'], indent=2)}
 
-    Required data:
-    - Noise type / sound
-    - Pattern or progression
-    - Frequency
-    - Other relevant details
-
     Response format (no explanations, no extra text):
-    NOISES: {{sound}}, {{pattern}}, {{frequency}}, {{details}}
+    NOISES:
+    1. Sound: ...
+       Pattern: ...
+       Frequency: ...
+       Details: ...
 
-    If no noises are described:
+    If multiple noises are described, list them as 1, 2, 3, ...
+    If no noises are described, respond exactly with:
     NOISES: None
-    Answer in the Language of the input.
-
     """
 
     try:
@@ -34,3 +33,4 @@ def noise(state):
         return {"noises": result}
     except Exception as e:
         return {"noises": "", "warning": str(e)}
+
