@@ -9,7 +9,7 @@ def possible_cause(state):
     llm = ChatOllama(
         model=bots["possible_cause_agent"],
         base_url="http://localhost:11434",
-        temperature=0
+        temperature=0.5
     )
 
     prompt = f"""
