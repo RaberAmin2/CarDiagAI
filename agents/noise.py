@@ -25,6 +25,8 @@ def noise(state):
 
     If no noises are described:
     NOISES: None
+    Answer in the Language of the input.
+
     """
 
     try:

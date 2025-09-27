@@ -30,6 +30,7 @@ def possible_cause(state):
 
     If there is not enough information:
     POSSIBLE_CAUSES: None
+    Answer in the Language of the input.
     """
 
     try:

@@ -9,6 +9,8 @@ def possible_solution(state):
     llm = ChatOllama(model=bots["possible_solution_agent"], base_url="http://localhost:11434")
     prompt = f"""
     Using the following information prepare a detaild text for a mechanic to solve the Problem.
+    Answer in the Language of the input.
+
     {json.dumps(state['possible_causes'], indent=2)}
 
     Respond with a detailed text to solve the problem.

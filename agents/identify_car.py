@@ -26,6 +26,8 @@ def identify_car(state):
 
     If the details cannot be identified:
     CAR_DETAILS: Unknown
+    Answer in the Language of the input.
+
     """
 
     try:

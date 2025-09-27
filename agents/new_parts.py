@@ -9,7 +9,7 @@ def new_parts(state):
     llm = ChatOllama(model=bots["new_parts_agent"], base_url="http://localhost:11434", temperature=0)
 
     prompt = f"""
-    Task: Extract only information about newly replaced parts from the following description.
+    Task: Extract only information about newly replaced parts from the user in the following description.
 
     Description:
     {json.dumps(state['description_text'], indent=2)}
@@ -19,6 +19,7 @@ def new_parts(state):
 
     If no new parts are described:
     NEW_PARTS: None
+    Answer in the Language of the input.
     """
 
     try:

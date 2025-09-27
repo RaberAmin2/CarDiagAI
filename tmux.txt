@@ -1,0 +1,9 @@
+tmux new -s myname
+streamlit run app.py
+Ctrl-b ctrl-d to detach from the session 
+
+to later attach to this session again:
+tmux a -t myname
+
+you find a cheatsheet with all relevant commands on git: https://gist.github.com/MohamedAlaa/2961058
+Hope that helps

@@ -30,6 +30,8 @@ Description:
 Answer in a short, clear text starting with 'Affected behaviors: ...'.  
 If no behavior can be identified, reply with 'No affected behaviors identified'.  
 Do not add explanations or extra formatting.
+Answer in the Language of the input.
+
 """
 
         response = llm.invoke([HumanMessage(content=prompt)])
