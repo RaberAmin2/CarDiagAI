@@ -8,6 +8,7 @@ from typing import Any, Dict
 from langchain_community.chat_models import ChatOllama
 from langchain_core.messages import HumanMessage
 
+from .fallbacks import fallback_behaviors
 from .utils import get_language_from_state, get_model_name, localize_phrase
 
 
@@ -57,8 +58,11 @@ Always answer in the same language as the input.
     except Exception as e:  # pylint: disable=broad-except
         logger.error("[Behavior Agent] Error: %s", e)
         language = get_language_from_state(state)
+        fallback = fallback_behaviors(state.get("description_text", ""), language)
+        if not fallback:
+            fallback = localize_phrase("behavior_none", language)
         return {
-            "affected_behaviors": localize_phrase("behavior_none", language),
+            "affected_behaviors": fallback,
             "warning": str(e)
         }
 

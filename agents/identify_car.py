@@ -9,7 +9,8 @@ from typing import Any, Dict
 from langchain_community.chat_models import ChatOllama
 from langchain_core.messages import HumanMessage
 
-from .utils import get_model_name
+from .fallbacks import fallback_car_details
+from .utils import get_language_from_state, get_model_name
 
 
 logger = logging.getLogger(__name__)
@@ -52,5 +53,7 @@ Response format (no extra words, no explanations):
         return {"car_details": result}
     except Exception as exc:  # pylint: disable=broad-except
         logger.error("❌ Fehler im Identify-Car-Agent: %s", exc)
-        return {"car_details": "", "warning": str(exc)}
+        language = get_language_from_state(state)
+        fallback = fallback_car_details(description, language)
+        return {"car_details": fallback, "warning": str(exc)}
 

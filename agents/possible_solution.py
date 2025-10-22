@@ -9,6 +9,7 @@ from typing import Any, Dict
 from langchain_community.chat_models import ChatOllama
 from langchain_core.messages import HumanMessage
 
+from .fallbacks import fallback_possible_solutions
 from .utils import get_language_from_state, get_model_name, localize_phrase
 
 
@@ -53,4 +54,7 @@ def possible_solution(state: Dict[str, Any]) -> Dict[str, str]:
     except Exception as exc:  # pylint: disable=broad-except
         logger.error("❌ Fehler im Possible-Solution-Agent: %s", exc)
         language = get_language_from_state(state)
-        return {"possible_solutions": localize_phrase("possible_solutions_none", language), "warning": str(exc)}
+        fallback = fallback_possible_solutions(state, language)
+        if not fallback:
+            fallback = localize_phrase("possible_solutions_none", language)
+        return {"possible_solutions": fallback, "warning": str(exc)}
