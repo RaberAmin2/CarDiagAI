@@ -8,7 +8,7 @@ DiaKari ist ein KI-gestützter Fahrzeugdiagnose-Agent, der auf der Llama3.2 basi
 """
 import streamlit as st
 import json
-from typing import TypedDict
+from typing import Any, Dict, Iterable, TypedDict
 from langgraph.graph import StateGraph, END
 import logging
 from agents import (
@@ -85,6 +85,36 @@ workflow.add_edge("chat", END)
 # workflow.add_edge("chat", "stop_models")
 # workflow.add_edge("stop_models", END)
 graph = workflow.compile()
+
+
+AGENT_SEQUENCE = (
+    (identify_car.identify_car, ("car_details",)),
+    (behavior.behavior, ("affected_behaviors",)),
+    (noise.noise, ("noises",)),
+    (new_parts.new_parts, ("changed_parts",)),
+    (possible_cause.possible_cause, ("possible_causes",)),
+    (possible_solution.possible_solution, ("possible_solutions",)),
+)
+
+
+def run_diagnosis_pipeline(
+    state: Dict[str, Any], locked_fields: Iterable[str] | None = None
+) -> Dict[str, Any]:
+    """Recalculate the diagnosis when new information is provided via chat."""
+
+    working_state: Dict[str, Any] = dict(state)
+    locked = set(locked_fields or [])
+    aggregated_updates: Dict[str, Any] = {}
+
+    for agent_fn, produced_keys in AGENT_SEQUENCE:
+        agent_result = agent_fn(working_state)
+        working_state.update(agent_result)
+
+        for key in produced_keys:
+            if key in agent_result and key not in locked:
+                aggregated_updates[key] = agent_result[key]
+
+    return aggregated_updates
 
 # UI Start
 st.markdown("# AI Car Diagnostic Agent")
@@ -245,7 +275,32 @@ if st.session_state.state.get("possible_solutions"):
             with st.spinner("Antwort wird generiert..."):
                 result = chat_agent.chat_node(st.session_state.state)
                 logging.debug(f"🤖 Chat-Agent Antwort: {result.get('chat_response')}")
+
+                locked_fields = set(result.pop("locked_fields", []))
+                regenerate = bool(result.pop("regenerate", False))
+
                 st.session_state.state.update(result)
+                st.session_state.state["user_question"] = ""
+
+                if regenerate:
+                    try:
+                        logging.info(
+                            "🔁 Zusätzliche Informationen erkannt – Diagnose wird aktualisiert."
+                        )
+                        diagnosis_updates = run_diagnosis_pipeline(
+                            st.session_state.state, locked_fields
+                        )
+                        st.session_state.state.update(diagnosis_updates)
+                        logging.debug(
+                            "🧮 Aktualisierte Diagnosefelder: %s",
+                            json.dumps(diagnosis_updates, indent=2, ensure_ascii=False),
+                        )
+                    except Exception as exc:  # pylint: disable=broad-except
+                        logging.exception(
+                            "❌ Fehler beim Aktualisieren der Diagnose nach Chat-Eingabe: %s",
+                            exc,
+                        )
+
                 st.rerun()
 else:
     logging.info("ℹ️ Kein Text eingegeben. Warte auf Benutzereingabe.")
