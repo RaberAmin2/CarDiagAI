@@ -1,12 +1,26 @@
-from langchain_core.messages import HumanMessage
+"""Agent that generates possible solutions from the derived causes."""
+
+from __future__ import annotations
+
+import json
+import logging
+from typing import Any, Dict
+
 from langchain_community.chat_models import ChatOllama
-import json 
+from langchain_core.messages import HumanMessage
 
-with open('agents/bots_settings.json') as f:
-    bots = json.load(f)
+from .utils import get_model_name
 
-def possible_solution(state):
-    llm = ChatOllama(model=bots["possible_solution_agent"], base_url="http://localhost:11434")
+
+logger = logging.getLogger(__name__)
+
+
+def possible_solution(state: Dict[str, Any]) -> Dict[str, str]:
+    llm = ChatOllama(
+        model=get_model_name("possible_solution_agent"),
+        base_url="http://localhost:11434",
+        temperature=0,
+    )
 
     prompt = f"""
     Task: Based on the possible causes provided, generate a structured solution.
@@ -16,7 +30,7 @@ def possible_solution(state):
     - Always respond in the same language as the input.
 
     Possible Causes:
-    {json.dumps(state['possible_causes'], indent=2)}
+    {json.dumps(state.get('possible_causes', ''), indent=2, ensure_ascii=False)}
 
     Response format (no extra explanations):
     POSSIBLE_SOLUTIONS:
@@ -36,5 +50,6 @@ def possible_solution(state):
     try:
         result = llm.invoke([HumanMessage(content=prompt)]).content
         return {"possible_solutions": result.strip()}
-    except Exception as e:
-        return {"possible_solutions": "", "warning": str(e)}
+    except Exception as exc:  # pylint: disable=broad-except
+        logger.error("❌ Fehler im Possible-Solution-Agent: %s", exc)
+        return {"possible_solutions": "", "warning": str(exc)}
