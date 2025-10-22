@@ -8,13 +8,8 @@ DiaKari ist ein KI-gestützter Fahrzeugdiagnose-Agent, der auf der Llama3.2 basi
 """
 import streamlit as st
 import json
-from typing import TypedDict, Annotated
+from typing import TypedDict
 from langgraph.graph import StateGraph, END
-from langchain_core.messages import HumanMessage
-from langchain_community.chat_models import ChatOllama
-from langchain_community.utilities import GoogleSerperAPIWrapper
-from dotenv import load_dotenv
-import os
 import logging
 from agents import (
     identify_car,
@@ -51,18 +46,20 @@ else:
 
 
 # Statusdefinition
-class GraphState(TypedDict):
+class GraphState(TypedDict, total=False):
+    """Shared state passed between the different LangGraph nodes."""
+
     description_text: str
     car_details: str
     affected_parts: str
-    affected_beaviors: str
+    affected_behaviors: str
     possible_causes: str
     possible_solutions: str
     noises: str
     changed_parts: str
     chat_response: str
     user_question: str
-    chat_history: Annotated[list[dict], "Chat history for the conversation"]
+    chat_history: list[dict[str, str]]
 
 
 # Langgraph Workflow
@@ -96,13 +93,13 @@ if "state" not in st.session_state:
     logging.info("🔄 Session State wird initialisiert.")
     st.session_state.state = {
         "description_text": "",
-        "affected_parts": [],
-        "affected_beaviors": [],
-        "possible_causes": [],
-        "possible_solutions": [],
-        "noises": [],
-        "car_details": [],
-        "changed_parts": [],
+        "affected_parts": "",
+        "affected_behaviors": "",
+        "possible_causes": "",
+        "possible_solutions": "",
+        "noises": "",
+        "car_details": "",
+        "changed_parts": "",
         "chat_response": "",
         "user_question": "",
         "chat_history": [],
@@ -111,9 +108,8 @@ if "state" not in st.session_state:
 a = ""
 
 with st.form("diagnostic_form"):
-    col1 = st.columns(1)
-    if col1:
-        a = st.text_area("Beschreibung des Problems", value=test_text)
+    col1 = st.columns(1)[0]
+    a = st.text_area("Beschreibung des Problems", value=test_text)
     submit_btn = st.form_submit_button("Diagnose starten")
 
 if submit_btn:
@@ -131,7 +127,7 @@ if submit_btn:
             "car_details": "",
             "description_text": a,
             "affected_parts": "",
-            "affected_beaviors": "",
+            "affected_behaviors": "",
             "possible_causes": "",
             "possible_solutions": "",
             "noises": "",
@@ -164,7 +160,7 @@ if st.session_state.state.get("possible_solutions"):
         st.markdown(f"> {st.session_state.state['car_details']}")
 
         st.markdown("#### 💠 Erkanntes Fehlverhalten")
-        st.markdown(f"> {st.session_state.state['affected_beaviors']}")
+        st.markdown(f"> {st.session_state.state['affected_behaviors']}")
 
         st.markdown("#### 🔊 Geräusche")
         st.markdown(f"> {st.session_state.state['noises']}")
@@ -189,7 +185,7 @@ if st.session_state.state.get("possible_solutions"):
                     "Die Nutzereingabe war: "
                     + st.session_state.state["description_text"]
                     + "\n\nFehlverhalten: "
-                    + st.session_state.state["affected_beaviors"]
+                    + st.session_state.state["affected_behaviors"]
                     + "\n\nGeräusche: "
                     + st.session_state.state["noises"]
                     + "\n\nErsetzte Teile: "
