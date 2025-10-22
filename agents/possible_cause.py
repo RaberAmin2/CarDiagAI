@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 def possible_cause(state: Dict[str, Any]) -> Dict[str, str]:
     llm = ChatOllama(
-        model=get_model_name("possible_cause_agent"),
+        model=get_model_name("possible_cause_agent", state),
         base_url="http://localhost:11434",
         temperature=0.5,
     )

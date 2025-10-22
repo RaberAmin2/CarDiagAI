@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import logging
 from functools import lru_cache
-from typing import Any, Dict
+from typing import Any, Dict, Iterable, List
 
 from langdetect import DetectorFactory, LangDetectException, detect
 
@@ -138,12 +138,160 @@ def load_bot_settings() -> Dict[str, Any]:
         return {}
 
 
-def get_model_name(agent_key: str, default: str = "llama3") -> str:
+def _gather_relevant_text(agent_key: str, state: Dict[str, Any] | None) -> str:
+    """Collect text snippets that describe the agent task context."""
+
+    if not state:
+        return ""
+
+    key_map: Dict[str, Iterable[str]] = {
+        "identify_car_agent": ("description_text",),
+        "behavior_agent": ("description_text",),
+        "noise_agent": ("description_text",),
+        "new_parts_agent": ("description_text",),
+        "possible_cause_agent": (
+            "description_text",
+            "car_details",
+            "affected_behaviors",
+            "noises",
+            "changed_parts",
+        ),
+        "possible_solution_agent": (
+            "description_text",
+            "car_details",
+            "affected_behaviors",
+            "noises",
+            "possible_causes",
+            "changed_parts",
+        ),
+        "chat_agent": ("user_question",),
+    }
+
+    relevant_keys = key_map.get(agent_key)
+    if not relevant_keys:
+        return state.get("description_text", "")
+
+    parts: List[str] = []
+    for key in relevant_keys:
+        value = state.get(key)
+        if isinstance(value, str) and value.strip():
+            parts.append(value.strip())
+
+    return "\n\n".join(parts)
+
+
+def _score_text_complexity(text: str) -> int:
+    """Return a heuristic complexity score for *text*."""
+
+    if not text or not text.strip():
+        return 0
+
+    words = text.split()
+    word_count = len(words)
+    unique_terms = len({word.lower().strip(",.;:") for word in words if word})
+    sentence_markers = sum(text.count(marker) for marker in ".!?")
+    list_markers = text.count("\n-") + text.count("\n*")
+    paragraph_breaks = text.count("\n\n")
+
+    score = word_count
+    score += unique_terms // 2
+    score += sentence_markers * 3
+    score += list_markers * 6
+    score += paragraph_breaks * 4
+
+    return score
+
+
+def _additional_context_score(agent_key: str, state: Dict[str, Any] | None) -> int:
+    if not state:
+        return 0
+
+    supporting_keys: Dict[str, Iterable[str]] = {
+        "possible_cause_agent": (
+            "car_details",
+            "affected_behaviors",
+            "noises",
+            "changed_parts",
+        ),
+        "possible_solution_agent": (
+            "car_details",
+            "affected_behaviors",
+            "noises",
+            "possible_causes",
+            "changed_parts",
+        ),
+        "chat_agent": ("chat_history",),
+    }
+
+    keys = supporting_keys.get(agent_key, ())
+    bonus = 0
+    for key in keys:
+        value = state.get(key)
+        if isinstance(value, str) and value.strip():
+            bonus += 25
+        elif isinstance(value, list) and value:
+            bonus += 15 + 5 * len(value)
+    return bonus
+
+
+def determine_task_complexity(agent_key: str, state: Dict[str, Any] | None) -> str:
+    """Estimate the complexity tier for the agent call."""
+
+    text = _gather_relevant_text(agent_key, state)
+    score = _score_text_complexity(text)
+    score += _additional_context_score(agent_key, state)
+
+    if score <= 160:
+        complexity = "simple"
+    elif score <= 340:
+        complexity = "moderate"
+    else:
+        complexity = "complex"
+
+    logger.debug(
+        "[Model Selector] Agent: %s | Score: %s | Complexity: %s",
+        agent_key,
+        score,
+        complexity,
+    )
+
+    return complexity
+
+
+def get_model_name(
+    agent_key: str,
+    state: Dict[str, Any] | None = None,
+    default: str = "llama3",
+) -> str:
     """Return the configured model name for the given agent.
 
-    Falls back to *default* when the configuration file does not contain an
-    entry for *agent_key*.
+    Supports tiered configuration via ``simple``/``moderate``/``complex`` keys.
     """
 
-    return load_bot_settings().get(agent_key, default)
+    settings = load_bot_settings()
+    config = settings.get(agent_key)
+    defaults = settings.get("defaults", {})
+
+    if isinstance(config, dict):
+        complexity = determine_task_complexity(agent_key, state)
+        return (
+            config.get(complexity)
+            or config.get("default")
+            or defaults.get(complexity)
+            or defaults.get("default")
+            or default
+        )
+
+    if isinstance(config, str):
+        return config
+
+    if state is not None:
+        complexity = determine_task_complexity(agent_key, state)
+        return (
+            defaults.get(complexity)
+            or defaults.get("default")
+            or default
+        )
+
+    return defaults.get("default", default)
 
