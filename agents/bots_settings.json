@@ -2,41 +2,41 @@
   "defaults": {
     "simple": "llama3.2:1b",
     "moderate": "llama3.2:3b",
-    "complex": "llama3.2:8b"
+    "complex": "llama3.1:8b"
   },
   "behavior_agent": {
     "simple": "llama3.2:1b",
     "moderate": "llama3.2:3b",
-    "complex": "llama3.2:8b"
+    "complex": "llama3.1:8b"
   },
   "noise_agent": {
     "simple": "llama3.2:1b",
     "moderate": "llama3.2:3b",
-    "complex": "llama3.2:8b"
+    "complex": "llama3.1:8b"
   },
   "new_parts_agent": {
     "simple": "llama3.2:1b",
     "moderate": "llama3.2:3b",
-    "complex": "llama3.2:8b"
+    "complex": "llama3.1:8b"
   },
   "identify_car_agent": {
     "simple": "llama3.2:1b",
     "moderate": "llama3.2:3b",
-    "complex": "llama3.2:8b"
+    "complex": "llama3.1:8b"
   },
   "possible_cause_agent": {
     "simple": "llama3.2:3b",
     "moderate": "llama3.2:3b",
-    "complex": "llama3.2:8b"
+    "complex": "llama3.1:8b"
   },
   "possible_solution_agent": {
     "simple": "llama3.2:3b",
     "moderate": "llama3.2:3b",
-    "complex": "llama3.2:8b"
+    "complex": "llama3.1:8b"
   },
   "chat_agent": {
     "simple": "llama3.2:1b",
     "moderate": "llama3.2:3b",
-    "complex": "llama3.2:8b"
+    "complex": "llama3.1:8b"
   }
 }
