@@ -3,7 +3,7 @@
 """
 Created on Mon Jun 30 10:50:07 2025
 Programm zur Diagnose von Fahrzeugproblemen mittels KI.
-DiaKari ist ein KI-gestützter Fahrzeugdiagnose-Agent, der auf der Llama3.2 basiert.
+DiaKari ist ein KI-gestützter Fahrzeugdiagnose-Agent, der auf der Llama3.1 basiert.
 @author: razam
 """
 import streamlit as st
