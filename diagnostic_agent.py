@@ -23,6 +23,8 @@ from agents import (
 from utils_export import export_to_pdf
 import requests
 
+from version_manager import read_version
+
 
 # Logging konfigurieren
 logging.basicConfig(
@@ -31,10 +33,14 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
+APP_VERSION = str(read_version())
+
 logging.info("\U0001f680 DiaKari Diagnostic Agent gestartet")
+logging.info("Aktuelle Anwendungsversion: %s", APP_VERSION)
 
 # UI Setup
 st.set_page_config(page_title="AI Car Diag", layout="wide", page_icon="icon.png")
+st.caption(f"Version {APP_VERSION}")
 
 # Testmodus
 debug_mode = True
