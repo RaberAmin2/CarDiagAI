@@ -15,6 +15,21 @@ from .utils import get_model_name
 logger = logging.getLogger(__name__)
 
 
+def _normalise_update(value: Any) -> str:
+    """Return a clean string representation for optional updates."""
+
+    if value is None:
+        return ""
+
+    if isinstance(value, (list, tuple)):
+        value = "\n".join(str(item) for item in value if str(item).strip())
+
+    if isinstance(value, str):
+        return value.strip()
+
+    return str(value).strip()
+
+
 def chat_node(state: Dict[str, Any]) -> Dict[str, Any]:
     """Answer follow-up questions using the collected diagnostic context."""
 
@@ -32,6 +47,8 @@ def chat_node(state: Dict[str, Any]) -> Dict[str, Any]:
     prompt = f"""
 You are a car diagnostic assistant AI.
 Answer the user's question based on the collected analysis below. Keep answers concise, factual and reference the findings explicitly when useful.
+
+If the user message adds NEW factual information (e.g., new symptoms, noises, car details, replaced parts, clarified causes or solutions), capture it so the main diagnosis can be updated. Minor confirmations without new facts should not trigger an update.
 
 Problem description:
 {json.dumps(state.get('description_text', ''), indent=2, ensure_ascii=False)}
@@ -54,11 +71,23 @@ Possible causes:
 Possible solutions:
 {json.dumps(state.get('possible_solutions', ''), indent=2, ensure_ascii=False)}
 
-User question:
+User message:
 {question}
 
-Respond ONLY in the following JSON format:
-{{ "chat_response": "Your response here" }}
+Respond ONLY in valid JSON with the following structure (use null when a field has no update):
+{{
+  "chat_response": "...",
+  "description_append": "..." | null,
+  "car_details": "..." | null,
+  "affected_behaviors": "..." | null,
+  "noises": "..." | null,
+  "changed_parts": "..." | null,
+  "possible_causes": "..." | null,
+  "possible_solutions": "..." | null,
+  "regenerate": true | false
+}}
+
+"description_append" should contain only the new facts to append to the original description if the user shared additional context. Leave all fields null if no updates are required. Always reply in the same language as the user.
 """
 
     try:
@@ -66,10 +95,38 @@ Respond ONLY in the following JSON format:
 
         try:
             parsed = json.loads(result)
-            response = parsed.get("chat_response", result)
-        except json.JSONDecodeError:
-            logger.warning("⚠️ LLM-Antwort konnte nicht als JSON interpretiert werden.")
-            response = result
+        except json.JSONDecodeError as exc:  # pragma: no cover - LLM specific
+            logger.warning("⚠️ LLM-Antwort konnte nicht als JSON interpretiert werden: %s", result)
+            raise ValueError("Antwort war kein gültiges JSON") from exc
+
+        response = parsed.get("chat_response", "").strip()
+
+        updates: Dict[str, Any] = {}
+        updated_fields: set[str] = set()
+
+        description_append = _normalise_update(parsed.get("description_append"))
+        if description_append:
+            existing_description = state.get("description_text", "").strip()
+            if existing_description:
+                updates["description_text"] = f"{existing_description}\n\n{description_append}".strip()
+            else:
+                updates["description_text"] = description_append
+            updated_fields.add("description_text")
+
+        for key in (
+            "car_details",
+            "affected_behaviors",
+            "noises",
+            "changed_parts",
+            "possible_causes",
+            "possible_solutions",
+        ):
+            value = _normalise_update(parsed.get(key))
+            if value:
+                updates[key] = value
+                updated_fields.add(key)
+
+        regenerate_flag = bool(parsed.get("regenerate", False)) or bool(updates)
 
         chat_entry = {
             "question": question,
@@ -77,10 +134,14 @@ Respond ONLY in the following JSON format:
         }
         chat_history = state.get("chat_history", []) + [chat_entry]
 
-        return {
+        result_state = {
             "chat_response": response,
             "chat_history": chat_history,
+            "regenerate": regenerate_flag,
+            "locked_fields": sorted(updated_fields),
         }
+        result_state.update(updates)
+        return result_state
 
     except Exception as e:  # pylint: disable=broad-except
         logger.error("❌ Fehler im Chat-Agent: %s", e)
