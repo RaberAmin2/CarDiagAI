@@ -9,6 +9,7 @@ from typing import Any, Dict
 from langchain_community.chat_models import ChatOllama
 from langchain_core.messages import HumanMessage
 
+from .fallbacks import fallback_changed_parts
 from .utils import get_language_from_state, get_model_name, localize_phrase
 
 
@@ -47,4 +48,7 @@ equivalent of "NEW_PARTS: None" in the input language.
     except Exception as exc:  # pylint: disable=broad-except
         logger.error("❌ Fehler im New-Parts-Agent: %s", exc)
         language = get_language_from_state(state)
-        return {"changed_parts": localize_phrase("new_parts_none", language), "warning": str(exc)}
+        fallback = fallback_changed_parts(state.get("description_text", ""), language)
+        if not fallback:
+            fallback = localize_phrase("new_parts_none", language)
+        return {"changed_parts": fallback, "warning": str(exc)}
