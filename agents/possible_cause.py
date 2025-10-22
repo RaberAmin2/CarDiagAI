@@ -9,7 +9,7 @@ from typing import Any, Dict
 from langchain_community.chat_models import ChatOllama
 from langchain_core.messages import HumanMessage
 
-from .utils import get_model_name
+from .utils import get_language_from_state, get_model_name, localize_phrase
 
 
 logger = logging.getLogger(__name__)
@@ -37,12 +37,12 @@ def possible_cause(state: Dict[str, Any]) -> Dict[str, str]:
     Changed Parts: {json.dumps(state.get('changed_parts', ''), indent=2, ensure_ascii=False)}
 
     Response format (no explanations outside the structure):
-    POSSIBLE_CAUSES:
+    <Translate "POSSIBLE_CAUSES" into the input language>:
     - cause → reason
 
     If multiple causes are possible, list them in separate lines.
-    If no possible causes can be derived, respond exactly with:
-    POSSIBLE_CAUSES: None
+    If no possible causes can be derived, respond exactly with the translation
+    of "POSSIBLE_CAUSES: None" in the input language.
     """
 
     try:
@@ -50,6 +50,7 @@ def possible_cause(state: Dict[str, Any]) -> Dict[str, str]:
         return {"possible_causes": result}
     except Exception as exc:  # pylint: disable=broad-except
         logger.error("❌ Fehler im Possible-Cause-Agent: %s", exc)
-        return {"possible_causes": "", "warning": str(exc)}
+        language = get_language_from_state(state)
+        return {"possible_causes": localize_phrase("possible_causes_none", language), "warning": str(exc)}
 
 
