@@ -1,9 +1,42 @@
 {
-  "behavior_agent": "llama3.2",
-  "noise_agent": "llama3.2",
-  "new_parts_agent": "llama3.2",
-  "identify_car_agent": "llama3.2",
-  "possible_cause_agent": "llama3.2",
-  "possible_solution_agent": "llama3.2",
-  "chat_agent": "llama3.2"
+  "defaults": {
+    "simple": "llama3.2:1b",
+    "moderate": "llama3.2:3b",
+    "complex": "llama3.2:8b"
+  },
+  "behavior_agent": {
+    "simple": "llama3.2:1b",
+    "moderate": "llama3.2:3b",
+    "complex": "llama3.2:8b"
+  },
+  "noise_agent": {
+    "simple": "llama3.2:1b",
+    "moderate": "llama3.2:3b",
+    "complex": "llama3.2:8b"
+  },
+  "new_parts_agent": {
+    "simple": "llama3.2:1b",
+    "moderate": "llama3.2:3b",
+    "complex": "llama3.2:8b"
+  },
+  "identify_car_agent": {
+    "simple": "llama3.2:1b",
+    "moderate": "llama3.2:3b",
+    "complex": "llama3.2:8b"
+  },
+  "possible_cause_agent": {
+    "simple": "llama3.2:3b",
+    "moderate": "llama3.2:3b",
+    "complex": "llama3.2:8b"
+  },
+  "possible_solution_agent": {
+    "simple": "llama3.2:3b",
+    "moderate": "llama3.2:3b",
+    "complex": "llama3.2:8b"
+  },
+  "chat_agent": {
+    "simple": "llama3.2:1b",
+    "moderate": "llama3.2:3b",
+    "complex": "llama3.2:8b"
+  }
 }

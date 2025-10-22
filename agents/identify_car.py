@@ -19,7 +19,7 @@ def identify_car(state: Dict[str, Any]) -> Dict[str, str]:
     """Extract normalized car details from the problem description."""
 
     description = state.get("description_text", "")
-    model_name = get_model_name("identify_car_agent")
+    model_name = get_model_name("identify_car_agent", state)
 
     llm = ChatOllama(
         model=model_name,

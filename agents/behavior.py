@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 def behavior(state: Dict[str, Any]) -> Dict[str, str]:
     try:
         llm = ChatOllama(
-            model=get_model_name("behavior_agent"),
+            model=get_model_name("behavior_agent", state),
             base_url="http://localhost:11434",
             temperature=0,
         )

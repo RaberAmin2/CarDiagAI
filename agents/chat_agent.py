@@ -41,7 +41,7 @@ def chat_node(state: Dict[str, Any]) -> Dict[str, Any]:
             "chat_history": state.get("chat_history", []),
         }
 
-    model_name = get_model_name("chat_agent")
+    model_name = get_model_name("chat_agent", state)
     llm = ChatOllama(model=model_name, base_url="http://localhost:11434", temperature=0)
 
     prompt = f"""
