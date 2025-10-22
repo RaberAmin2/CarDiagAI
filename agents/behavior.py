@@ -1,24 +1,25 @@
-# agents/behavior.py
+"""Agent that extracts behavior-related information from a description."""
 
-from langchain_core.messages import HumanMessage
-from langchain_community.chat_models import ChatOllama
-import json
+from __future__ import annotations
+
 import logging
+from typing import Any, Dict
 
-# Lade zentrale Modellkonfiguration
-with open("agents/bots_settings.json") as f:
-    bots = json.load(f)
+from langchain_community.chat_models import ChatOllama
+from langchain_core.messages import HumanMessage
 
-# Optional: Logging aktivieren
+from .utils import get_model_name
+
+
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
 
-def behavior(state: dict) -> dict:
+
+def behavior(state: Dict[str, Any]) -> Dict[str, str]:
     try:
         llm = ChatOllama(
-            model=bots.get("behavior_agent", "llama3"),
+            model=get_model_name("behavior_agent"),
             base_url="http://localhost:11434",
-            temperature=0
+            temperature=0,
         )
 
         prompt = f"""
@@ -47,14 +48,14 @@ Always answer in the same language as the input.
         response = llm.invoke([HumanMessage(content=prompt)])
         result = response.content.strip()
 
-        logger.info(f"[Behavior Agent] Output: {result}")
+        logger.info("[Behavior Agent] Output: %s", result)
 
         return {
             "affected_behaviors": result
         }
 
-    except Exception as e:
-        logger.error(f"[Behavior Agent] Error: {str(e)}")
+    except Exception as e:  # pylint: disable=broad-except
+        logger.error("[Behavior Agent] Error: %s", e)
         return {
             "affected_behaviors": "No affected behaviors identified",
             "warning": str(e)
