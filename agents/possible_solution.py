@@ -9,7 +9,7 @@ from typing import Any, Dict
 from langchain_community.chat_models import ChatOllama
 from langchain_core.messages import HumanMessage
 
-from .utils import get_model_name
+from .utils import get_language_from_state, get_model_name, localize_phrase
 
 
 logger = logging.getLogger(__name__)
@@ -33,18 +33,18 @@ def possible_solution(state: Dict[str, Any]) -> Dict[str, str]:
     {json.dumps(state.get('possible_causes', ''), indent=2, ensure_ascii=False)}
 
     Response format (no extra explanations):
-    POSSIBLE_SOLUTIONS:
-    Mechanic instructions:
+    <Translate "POSSIBLE_SOLUTIONS" into the input language>:
+    <Translate "Mechanic instructions" into the input language>:
     - step 1
     - step 2
     - step 3
 
-    User advice:
+    <Translate "User advice" into the input language>:
     - advice 1
     - advice 2
 
-    If no possible causes are given, respond exactly with:
-    POSSIBLE_SOLUTIONS: None
+    If no possible causes are given, respond exactly with the translation
+    of "POSSIBLE_SOLUTIONS: None" in the input language.
     """
 
     try:
@@ -52,4 +52,5 @@ def possible_solution(state: Dict[str, Any]) -> Dict[str, str]:
         return {"possible_solutions": result.strip()}
     except Exception as exc:  # pylint: disable=broad-except
         logger.error("❌ Fehler im Possible-Solution-Agent: %s", exc)
-        return {"possible_solutions": "", "warning": str(exc)}
+        language = get_language_from_state(state)
+        return {"possible_solutions": localize_phrase("possible_solutions_none", language), "warning": str(exc)}

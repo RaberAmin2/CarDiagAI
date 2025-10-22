@@ -8,7 +8,7 @@ from typing import Any, Dict
 from langchain_community.chat_models import ChatOllama
 from langchain_core.messages import HumanMessage
 
-from .utils import get_model_name
+from .utils import get_language_from_state, get_model_name, localize_phrase
 
 
 logger = logging.getLogger(__name__)
@@ -23,24 +23,24 @@ def behavior(state: Dict[str, Any]) -> Dict[str, str]:
         )
 
         prompt = f"""
-Extract only information about the car's behavior from the following description. 
-This includes driving dynamics and performance issues (e.g., shaking, vibrations, steering problems, braking issues, acceleration issues, stalling, pulling, loss of power). 
+Extract only information about the car's behavior from the following description.
+This includes driving dynamics and performance issues (e.g., shaking, vibrations, steering problems, braking issues, acceleration issues, stalling, pulling, loss of power).
 Ignore noises, replaced parts, or vehicle specifications.
 
-Normalize the behaviors into clear, concise automotive terms. 
+Normalize the behaviors into clear, concise automotive terms.
 If the user uses informal phrases, rewrite them as standard behavior descriptions.
 
 Description:
 {state.get('description_text', '')}
 
 Response format (no explanations, no extra text):
-Affected behaviors:
+<Translate "Affected behaviors" into the input language>:
 - behavior1
 - behavior2
 - behavior3
 
-If no behaviors can be identified, respond exactly with:
-No affected behaviors identified
+If no behaviors can be identified, respond exactly with the translation of
+"No affected behaviors identified" in the language used by the user.
 
 Always answer in the same language as the input.
 """
@@ -56,8 +56,9 @@ Always answer in the same language as the input.
 
     except Exception as e:  # pylint: disable=broad-except
         logger.error("[Behavior Agent] Error: %s", e)
+        language = get_language_from_state(state)
         return {
-            "affected_behaviors": "No affected behaviors identified",
+            "affected_behaviors": localize_phrase("behavior_none", language),
             "warning": str(e)
         }
 
